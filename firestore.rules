@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only paths under a specific Room ID are reachable; the room list itself can't be read.
+    match /rooms/{room}/{coll}/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
