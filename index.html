@@ -37,6 +37,19 @@ button.chip{cursor:pointer;border:1px solid var(--ac);padding:3px 11px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;z-index:9;animation:up .2s}@keyframes up{from{opacity:0;transform:translate(-50%,10px)}}
 .hide{display:none!important}.live{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px}
 .cnt{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.cnt>input{flex:1 1 200px}
+body{background:radial-gradient(900px 420px at 8% -8%,color-mix(in srgb,var(--ac) 16%,transparent),transparent),radial-gradient(700px 360px at 100% 0,color-mix(in srgb,#ec4899 9%,transparent),transparent),var(--bg);background-attachment:fixed}
+.card{border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.05),0 10px 28px -16px rgba(0,0,0,.28)}.ex:hover{transform:translateY(-1px)}
+#app>.top:first-child{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 0;margin:0 0 10px}
+h1{background:linear-gradient(90deg,var(--tx),var(--ac));-webkit-background-clip:text;background-clip:text;color:transparent}
+.pri,.pri:hover{background:linear-gradient(135deg,var(--ac),#7c3aed);border:0;color:#fff}.pri:hover{filter:brightness(1.12)}
+button{border-radius:11px}input,select{border-radius:11px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.st{background:linear-gradient(135deg,var(--card),var(--ac2));border:1px solid var(--bd);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.st span{font-size:10.5px;color:var(--mu);font-weight:700;text-transform:uppercase;letter-spacing:.05em}.st b{font-size:clamp(14px,4.4vw,22px);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis}.st i{font-size:11px;color:var(--mu);font-style:normal}
+.chip{display:inline-flex;align-items:center;padding:3px 11px 3px 4px}.av{display:inline-flex;width:22px;height:22px;border-radius:50%;color:#fff;font-size:11px;font-style:normal;font-weight:700;align-items:center;justify-content:center;margin-right:6px}
+.ico{width:44px;height:44px;border-radius:13px;background:var(--ac2);display:flex;align-items:center;justify-content:center;font-size:21px}.row>.ico{flex:0 0 44px}
+.dng{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--bd))}.dng:hover{background:color-mix(in srgb,var(--bad) 12%,transparent)}
+.ms{border-radius:14px}.hist{border-radius:0 10px 10px 0}
 </style></head><body><div class="w">
 
 <div id="land">
@@ -60,12 +73,13 @@ button.chip{cursor:pointer;border:1px solid var(--ac);padding:3px 11px}
   <div class="cnt"><button data-act="theme">◐</button><button data-act="leave">Leave</button></div></div>
  <div class="card"><div class="cnt"><span class="mu">Room ID</span><input id="ri" readonly class="mono"><button data-act="cprid">Copy ID</button><button class="pri" data-act="cplink">Copy invite link</button></div>
   <div id="mem" style="margin-top:8px"></div></div>
+ <div class="stats" id="stats"></div>
  <div class="grid2">
   <div class="card"><h2>⚖️ Live balance <span class="mu" style="font-weight:400">(unsettled)</span></h2><div id="bal"></div></div>
   <div class="card"><h2 id="ft">➕ Add expense</h2>
    <div class="row"><div><label>Amount</label><input id="fa" type="number" inputmode="decimal" step="0.01" min="0"></div><div><label>Paid by</label><select id="fp"></select></div></div>
    <label>Description</label><input id="fd" maxlength="80" placeholder="Groceries, Wi-Fi…">
-   <div class="row"><div><label>Category</label><select id="fc"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Food</option><option>Rent</option><option>Utilities</option><option>Groceries</option><option>Transport</option><option>Fun</option><option>Other</option></select></div><div><label>Date</label><input id="fx" type="date"></div></div>
+   <div class="row"><div><label>Category</label><select id="fc"><option value="Breakfast">🍳 Breakfast</option><option value="Lunch">🍱 Lunch</option><option value="Dinner">🍽️ Dinner</option><option value="Food">🍔 Food</option><option value="Groceries">🛒 Groceries</option><option value="Travel">✈️ Travel</option><option value="Transport">🚌 Transport</option><option value="Rent">🏠 Rent</option><option value="Utilities">💡 Utilities</option><option value="Fun">🎉 Fun</option><option value="Other">📦 Other</option></select></div><div><label>Date</label><input id="fx" type="date"></div></div>
    <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--tx);margin-top:14px;cursor:pointer"><input type="checkbox" id="fv" style="width:auto"> 👤 Personal expense — not split, only for the payer</label><div class="cnt" style="margin-top:14px"><button class="pri" data-act="save" id="fs">Add expense</button><button data-act="cancel" id="fcx" class="hide">Cancel edit</button></div></div>
  </div>
  <div class="card"><h2>📄 Statement</h2>
@@ -78,7 +92,7 @@ button.chip{cursor:pointer;border:1px solid var(--ac);padding:3px 11px}
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getFirestore,collection,doc,setDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {getFirestore,collection,doc,setDoc,deleteDoc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 /* Firebase web-app config (not secret; Firestore rules protect the data) */
 const FIREBASE_CONFIG={apiKey:"AIzaSyCz4cWyrGR_vE4krt8oNklUUZV2ct4GNP8",authDomain:"splitroom-2b34f.firebaseapp.com",projectId:"splitroom-2b34f",storageBucket:"splitroom-2b34f.firebasestorage.app",messagingSenderId:"997874683183",appId:"1:997874683183:web:74727e3fed6b98c27625da"};
 let fdb=null;try{if(!FIREBASE_CONFIG.projectId.startsWith('PASTE'))fdb=getFirestore(initializeApp(FIREBASE_CONFIG))}catch(e){console.error(e)}
@@ -97,6 +111,9 @@ async function put(path,o){const {id,...d}=o;
  try{if(mode==='live'){await setDoc(doc(fdb,path,id),d);return true}
  const k='sr:'+path;let a=[];try{a=JSON.parse(ls.g(k)||'[]')}catch(e){}const i=a.findIndex(x=>x.id===id);i<0?a.push(o):a[i]=o;ls.s(k,JSON.stringify(a));(L[path]||[]).forEach(f=>f());return true}
  catch(e){toast("Couldn't save — check your connection and Firestore rules");return false}}
+async function rm(path,id){if(mode==='live'){await deleteDoc(doc(fdb,path,id));return}const k='sr:'+path;let a=[];try{a=JSON.parse(ls.g(k)||'[]')}catch(e){}ls.s(k,JSON.stringify(a.filter(x=>x.id!==id)));(L[path]||[]).forEach(f=>f())}
+const EM={Breakfast:'🍳',Lunch:'🍱',Dinner:'🍽️',Food:'🍔',Groceries:'🛒',Travel:'✈️',Transport:'🚌',Rent:'🏠',Utilities:'💡',Fun:'🎉',Other:'📦'};
+const col=s=>`hsl(${[...s].reduce((a,c)=>a*31+c.charCodeAt(0),7)%360} 62% 48%)`;
 /* ---- landing ---- */
 const dk='sr:theme';function theme(){const r=document.documentElement,d=r.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.dataset.theme=d==='dark'?'light':'dark';ls.s(dk,r.dataset.theme)}
 if(ls.g(dk))document.documentElement.dataset.theme=ls.g(dk);
@@ -122,14 +139,16 @@ async function enter(id,name,fresh){await dbP;RID=id;P='rooms/'+id;ME=name;ls.s(
   sub(P+'/cm',a=>{cms=a;rLed()}),sub(P+'/ms',a=>{mss=a;rAll()})];
  if(fresh)toast('Room created — copy the invite link to share it')}
 function leave(){unsubs.forEach(u=>u&&u());unsubs=[];exps=[];cms=[];mss=[];room=null;ls.d('sr:last');history.replaceState(null,'',location.pathname);$('#app').classList.add('hide');$('#land').classList.remove('hide');found=null;$('#j2').classList.add('hide');$('#jb').textContent='Find room'}
-function rMeta(){$('#rt').textContent=room.name;$('#mem').innerHTML=room.members.map(m=>`<span class="chip">${esc(m)}${m===ME?' (you)':''}</span>`).join('');
+function rMeta(){$('#rt').textContent=room.name;$('#mem').innerHTML=room.members.map(m=>`<span class="chip"><i class="av" style="background:${col(m)}">${esc(m[0].toUpperCase())}</i>${esc(m)}${m===ME?' (you)':''}</span>`).join('');
  const v=$('#fp').value||ME;$('#fp').innerHTML=room.members.map(m=>`<option ${m===v?'selected':''}>${esc(m)}</option>`).join('')}
 const money=x=>CUR+x.toFixed(2),lastOk=()=>Math.max(0,...mss.filter(m=>m.st==='ok').map(m=>m.ts)),locked=e=>e.ts<=lastOk();
 function calc(list){const n={};room.members.forEach(m=>n[m]=0);list.filter(e=>!e.personal).forEach(e=>{const s=e.amount/room.members.length;n[e.paidBy]=(n[e.paidBy]||0)+e.amount;room.members.forEach(m=>n[m]-=s)});return n}
 function xfers(n){const d=[],c=[];for(const m in n){const v=Math.round(n[m]*100)/100;v<-.005?d.push([m,-v]):v>.005&&c.push([m,v])}d.sort((a,b)=>b[1]-a[1]);c.sort((a,b)=>b[1]-a[1]);const t=[];let i=0,j=0;
  while(i<d.length&&j<c.length){const x=Math.min(d[i][1],c[j][1]);t.push([d[i][0],c[j][0],x]);d[i][1]-=x;c[j][1]-=x;if(d[i][1]<.005)i++;if(c[j][1]<.005)j++}return t}
 function rAll(fl){rBal();rLed(fl)}
-function rBal(){if(!room)return;const u=exps.filter(e=>!locked(e)&&!e.personal),n=calc(u),t=xfers(n),pp={};exps.filter(e=>e.personal).forEach(e=>pp[e.paidBy]=(pp[e.paidBy]||0)+e.amount);
+function rStats(){const all=exps.reduce((q,e)=>q+e.amount,0),n=calc(exps.filter(e=>!locked(e)&&!e.personal)),my=n[ME]||0,pe=exps.filter(e=>e.personal).reduce((q,e)=>q+e.amount,0);
+ $('#stats').innerHTML=`<div class="st"><span>Total spent</span><b>${money(all)}</b><i>${exps.length} expenses</i></div><div class="st"><span>Your balance</span><b class="${my>=0?'pos':'neg'}">${my>=0?'+':'−'}${money(Math.abs(my))}</b><i>${Math.abs(my)<.005?'all square':my>0?'you get back':'you owe'}</i></div><div class="st"><span>Personal</span><b>${money(pe)}</b><i>not split</i></div>`}
+function rBal(){if(!room)return;rStats();const u=exps.filter(e=>!locked(e)&&!e.personal),n=calc(u),t=xfers(n),pp={};exps.filter(e=>e.personal).forEach(e=>pp[e.paidBy]=(pp[e.paidBy]||0)+e.amount);
  $('#bal').innerHTML=(t.length?t.map(([a,b,x])=>`<div class="bal"><span><b>${esc(a)}</b> owes <b>${esc(b)}</b></span><span class="amt neg">${money(x)}</span></div>`).join(''):'<div class="mu">All square 🎉</div>')+
  `<div class="mu" style="margin-top:10px;font-size:12px">Unsettled total ${money(u.reduce((s,e)=>s+e.amount,0))} · split equally among ${room.members.length}</div>`+(Object.keys(pp).length?`<h2 style="margin-top:14px">👤 Personal spending <span class="mu" style="font-weight:400">(not split)</span></h2>`+Object.entries(pp).map(([k,v])=>`<div class="bal"><span>${esc(k)}</span><span class="amt">${money(v)}</span></div>`).join(''):'')}
 const fmt=t=>new Date(t).toLocaleString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
@@ -142,17 +161,20 @@ function rLed(fl=[]){if(!room)return;const keep={};document.querySelectorAll('.c
  $('#led').innerHTML=it.length?it.map(x=>{
   if(x.k==='m'){const m=x.m,p=m.st==='pe';return `<div class="ms ${p?'pe':'ok'}"><span>${p?'⏳ Pending — paid up to this point':'🔒 Settled — paid up to this point'} · ${esc(m.by)} · ${fmt(m.ts)}${p?'':' · approved by '+esc(m.ap)}</span>${p?(m.by!==ME?`<button class="pri sm" data-act="ap" data-id="${m.id}">Approve / Verify</button>`:'<i style="font-weight:400">awaiting the other party</i>'):''}</div>`}
   const e=x.e,lk=locked(e),cs=cms.filter(c=>c.eid===e.id&&!c.parent).sort((a,b)=>a.ts-b.ts),n=cms.filter(c=>c.eid===e.id).length,o=open.has(e.id),r=rep[e.id];
-  return `<div class="card ex ${lk?'lk':''} ${fl.includes(e.id)?'flash':''}"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><div style="flex:1"><b>${esc(e.desc)}</b><div class="mu" style="font-size:12px">${esc(e.date)} · ${esc(e.cat)} · paid by <b>${esc(e.paidBy)}</b></div></div><div class="amt mono" style="flex:0 0 auto">${money(e.amount)}</div></div>
-  <div style="margin-top:8px" class="cnt">${lk?'<span class="b ok">🔒 Settled</span>':`<button class="sm" data-act="ed" data-id="${e.id}">✎ Edit</button>`}<button class="sm" data-act="th" data-id="${e.id}">💬 ${n}</button>${e.personal?'<span class="b wa">👤 Personal</span>':''}${(e.hist||[]).length?`<span class="b ed">edited ×${e.hist.length}</span>`:''}</div>
+  return `<div class="card ex ${lk?'lk':''} ${fl.includes(e.id)?'flash':''}"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;align-items:center"><div class="ico">${EM[e.cat]||'📦'}</div><div style="flex:1"><b>${esc(e.desc)}</b><div class="mu" style="font-size:12px">${esc(e.date)} · ${esc(e.cat)} · paid by <b>${esc(e.paidBy)}</b></div></div><div class="amt mono" style="flex:0 0 auto">${money(e.amount)}</div></div>
+  <div style="margin-top:8px" class="cnt">${lk?'<span class="b ok">🔒 Settled</span>':`<button class="sm" data-act="ed" data-id="${e.id}">✎ Edit</button><button class="sm dng" data-act="del" data-id="${e.id}">🗑 Delete</button>`}<button class="sm" data-act="th" data-id="${e.id}">💬 ${n}</button>${e.personal?'<span class="b wa">👤 Personal</span>':''}${(e.hist||[]).length?`<span class="b ed">edited ×${e.hist.length}</span>`:''}</div>
   ${(e.hist||[]).length?`<div class="hist">${e.hist.map(h=>`<div><b>${esc(h.by)}</b> · ${fmt(h.ts)} — ${h.ch.map(esc).join('; ')}</div>`).join('')}</div>`:''}
   ${o?`<div>${cs.map(c=>cmH(c,e.id)).join('')}<div class="cf"><input class="cin" id="ci-${e.id}" data-e="${e.id}" placeholder="${r?'Replying…':'Comment — tag with @Name'}"><button class="pri sm" data-act="cm" data-id="${e.id}">Send</button></div></div>`:''}</div>`}).join(''):'<div class="card mu">No expenses yet — add the first one above.</div>';
  for(const k in keep){const i=document.getElementById(k);if(i)i.value=keep[k]}if(fo){const f=document.getElementById(fo);f&&f.focus&&f.focus()}}
 async function saveExp(){const a=parseFloat($('#fa').value),d=$('#fd').value.trim();if(!(a>0)||!d)return toast('Enter an amount and description');
  const o={amount:Math.round(a*100)/100,paidBy:$('#fp').value,desc:d,cat:$('#fc').value,date:$('#fx').value||today(),personal:$('#fv').checked};
- if(edId){const old=exps.find(e=>e.id===edId);if(!old||locked(old))return toast('This expense is settled and locked');const ch=[];
+ if(edId){const old=exps.find(e=>e.id===edId);if(!old||locked(old))return toast('This expense is locked or was deleted');const ch=[];
   for(const k of['amount','paidBy','desc','cat','date'])if(old[k]!=o[k])ch.push(`${k}: ${old[k]} → ${o[k]}`);if(!!old.personal!==o.personal)ch.push(`personal: ${!!old.personal} → ${o.personal}`);if(!ch.length)return cancel();
   if(await put(P+'/exp',{...old,...o,hist:[...(old.hist||[]),{by:ME,ts:Date.now(),ch}]}))cancel()}
  else if(await put(P+'/exp',{id:uid(),ts:Date.now(),by:ME,...o,hist:[]})){$('#fa').value='';$('#fd').value='';$('#fv').checked=false}}
+async function delExp(id){const e=exps.find(x=>x.id===id);if(!e||locked(e))return toast('Settled expenses are locked');
+ if(!confirm(`Delete "${e.desc}" (${money(e.amount)})? This can't be undone.`))return;
+ try{await rm(P+'/exp',id);for(const c of cms.filter(c=>c.eid===id))await rm(P+'/cm',c.id);if(edId===id)cancel();toast('Expense deleted')}catch(x){toast("Couldn't delete — check connection and rules")}}
 function cancel(){edId=null;$('#fa').value='';$('#fd').value='';$('#fv').checked=false;$('#ft').textContent='➕ Add expense';$('#fs').textContent='Add expense';$('#fcx').classList.add('hide')}
 function startEd(id){const e=exps.find(x=>x.id===id);if(!e||locked(e))return;edId=id;$('#fa').value=e.amount;$('#fp').value=e.paidBy;$('#fd').value=e.desc;$('#fc').value=e.cat;$('#fx').value=e.date;$('#fv').checked=!!e.personal;
  $('#ft').textContent='✎ Editing expense';$('#fs').textContent='Save changes';$('#fcx').classList.remove('hide');$('#ft').scrollIntoView({behavior:'smooth',block:'center'})}
@@ -170,6 +192,16 @@ async function pdf(){const J=window.jspdf;if(!J)return toast('PDF library failed
  H('Net breakdown');room.members.forEach(p=>{const v=n[p]||0;d.text(`${cl(p)}`,16,y);d.text(`paid ${m(S.filter(x=>x.paidBy===p).reduce((q,x)=>q+x.amount,0))}`,70,y);d.text(`net ${v>=0?'+':'-'}${m(Math.abs(v))}`,125,y);y+=5.5});y+=3;
  if(pt>0){H('Personal expenses (not split)');room.members.forEach(p=>{const v=R.filter(x=>x.personal&&x.paidBy===p).reduce((q,x)=>q+x.amount,0);if(v){d.text(cl(p),16,y);d.text(m(v),70,y);y+=5.5}});y+=3}
  H('Who owes what');const t=xfers(n);if(!t.length){d.text('Everyone is settled up.',16,y);y+=6}t.forEach(([a,b,x])=>{d.text(`${cl(a)} owes ${cl(b)}  ${m(x)}`,16,y);y+=5.5});y+=4;
+ {const C={};R.forEach(x=>{const c=C[x.cat]=C[x.cat]||{n:0,v:0};c.n++;c.v+=x.amount});const gt=tot+pt,FG=['Breakfast','Lunch','Dinner','Food'],CN=['Breakfast','Lunch','Dinner','Food','Groceries','Travel','Transport','Rent','Utilities','Fun','Other'],
+ PAL=[[245,158,11],[16,185,129],[99,102,241],[239,68,68],[132,204,22],[14,165,233],[6,182,212],[168,85,247],[236,72,153],[249,115,22],[100,116,139]],pcol=k=>PAL[CN.indexOf(k)<0?10:CN.indexOf(k)],
+ pb=h=>{if(y+h>278){d.addPage();y=20}},pp_=v=>(gt?v/gt*100:0).toFixed(1)+'%',rows=[],fk=FG.filter(k=>C[k]);
+ if(fk.length)rows.push({l:'Food',k:'Food',n:fk.reduce((q,k)=>q+C[k].n,0),v:fk.reduce((q,k)=>q+C[k].v,0),sub:fk.map(k=>({l:k==='Food'?'Other food':k,k,n:C[k].n,v:C[k].v}))});
+ Object.keys(C).filter(k=>!FG.includes(k)).forEach(k=>rows.push({l:k,k,n:C[k].n,v:C[k].v}));rows.sort((a,b)=>b.v-a.v);
+ pb(30);H('Spending by category (shared + personal)');d.setFillColor(238,240,255);d.rect(14,y-4.5,182,7,'F');d.setFont('helvetica','bold');d.setFontSize(9);d.text('Category',16,y);d.text('Txns',110,y,{align:'right'});d.text('Amount',150,y,{align:'right'});d.text('Share',194,y,{align:'right'});y+=7;d.setFont('helvetica','normal');
+ rows.forEach(r=>{pb(14);d.setFillColor(...pcol(r.k));d.rect(16,y-3,3,3,'F');d.setFont('helvetica','bold');d.text(cl(r.l),22,y);d.text(String(r.n),110,y,{align:'right'});d.text(m(r.v),150,y,{align:'right'});d.text(pp_(r.v),194,y,{align:'right'});y+=5.5;d.setFont('helvetica','normal');
+  (r.sub||[]).forEach(q=>{pb(6);d.setFontSize(8.5);d.setTextColor(100);d.setFillColor(...pcol(q.k));d.circle(30,y-1,0.9,'F');d.text(cl(q.l),33,y);d.text(String(q.n),110,y,{align:'right'});d.text(m(q.v),150,y,{align:'right'});d.text(pp_(q.v),194,y,{align:'right'});d.setTextColor(20);d.setFontSize(9);y+=5})});
+ y+=5;pb(24);H('Category chart');const mx=Math.max(...Object.values(C).map(c=>c.v),1);
+ Object.keys(C).sort((a,b)=>C[b].v-C[a].v).forEach(k=>{pb(8);d.setFontSize(9);d.text(cl(k),16,y);const w=Math.max(1.5,C[k].v/mx*95);d.setFillColor(...pcol(k));d.roundedRect(44,y-3.6,w,4.6,1,1,'F');d.text(m(C[k].v)+'  ('+pp_(C[k].v)+')',44+w+3,y);y+=7.5});y+=4}
  const hd=()=>{d.setFillColor(238,240,255);d.rect(14,y-4.5,182,7,'F');d.setFont('helvetica','bold');d.setFontSize(9);d.text('Date',16,y);d.text('Description',40,y);d.text('Category',105,y);d.text('Paid by',138,y);d.text('Amount',194,y,{align:'right'});d.setFont('helvetica','normal');y+=7};
  H('Itemized transactions   (P = personal, not split)');hd();
  R.forEach((x,i)=>{if(y>278){d.addPage();y=20;hd()}d.setFontSize(9);d.text(x.date,16,y);d.text(cl(x.desc).slice(0,32),40,y);d.text(cl(x.cat)+(x.personal?' (P)':''),105,y);d.text(cl(x.paidBy).slice(0,18),138,y);d.text(m(x.amount),194,y,{align:'right'});d.setDrawColor(230);d.line(14,y+2,196,y+2);y+=6.5});
@@ -181,7 +213,7 @@ const copy=async(t,m)=>{try{await navigator.clipboard.writeText(t);toast(m)}catc
 document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
  if(a==='theme')theme();else if(a==='create')create();else if(a==='join')join();else if(a==='pick')enterAs(b.dataset.n).catch(()=>{});else if(a==='leave')leave();
  else if(a==='cprid')copy(RID,'Room ID copied');else if(a==='cplink')copy(link(),'Invite link copied');
- else if(a==='save')saveExp();else if(a==='cancel')cancel();else if(a==='ed')startEd(id);else if(a==='pdf')pdf();
+ else if(a==='save')saveExp();else if(a==='cancel')cancel();else if(a==='ed')startEd(id);else if(a==='del')delExp(id);else if(a==='pdf')pdf();
  else if(a==='th'){open.has(id)?open.delete(id):open.add(id);rLed();const i=document.getElementById('ci-'+id);i&&i.focus()}
  else if(a==='cm')sendCm(id);
  else if(a==='rp'){rep[b.dataset.e]=b.dataset.c;const i=document.getElementById('ci-'+b.dataset.e);i.value='@'+b.dataset.by+' ';i.placeholder='Replying…';i.focus()}
